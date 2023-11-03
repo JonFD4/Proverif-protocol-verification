@@ -1,4 +1,5 @@
 # Cryptography: Modelling And Verifying Key Exchange Using ProVerif
+
 ## Introduction:
 
 Cryptography is a field that focuses on communication security which allows senders and recipients to transmit information without interference from adverse third parties. This study employs protocols of data encryption, whereby messages are converted into secret code (ciphertext), and decryption, in which the recipient decodes the message. 
@@ -17,70 +18,73 @@ Within this tool, cryptographic primitives are treated as black boxes in the sen
 
 Therefore, when analysing attacks on cryptographic protocols we consider the Dolev-Yao attacker which is a powerful attacker, this attacker can capture everything communicated between two parties (the sender and receiver) by recording, replying and modifying the messages sent between the two parties; the attacker cannot however break the underlying cryptographic primitives (which are essentially used to conceal the messages, parallel to encryption).
 
+## Aim:
+* to develop basic understanding of cryptography.
+* to analyse and determine the function and benefits of proverif
+* to teste ability to follow documentation.
+
+
+# Method
+
+## Implemetation
+The method of implementation is listed in this [file.](methodology.md)
 
 ## AUTOMATED REASONING: PROVERIF
 
 Automated reasoning is a field of computer science that deals with use of applying logical inference to a set of assumption in order to achieve automacy in computer systems. ProVerif is an exemplary tool used in cryptography which uses automated reasoning (based on the Dolev-Yao adversary model) to estimate and define the security properties of encrypted data as well as verify privacy.
 
-## Method and Implementation /Deployment:
+![Hello.pv](images/helloscreenshot.png)
 
-Our project utilizes the [ProVerif manual](https://bblanche.gitlabpages.inria.fr/proverif/manual.pdf) to download the application and then execute it on command line. We test the control query given in the manual to see how the application work and its response to the query (hello.pv, hello.ext), in these initial runs we test whether the Cocks and RSA bitstrings can be intercepted by the attacker.
+**Fig 1. ProVerif script for ability of attacker to identify RSA and Cocks in the free channel**
 
-### Deployment
-**Install homebrew on macbook**
-To install Homebrew on your MacBook Air, you can follow these steps:
+In line 1 the free name channel c is declared and this is later going to be used for public channel communication between client and server. Lines 3 and 4 declare the bitstring types of free names Cocks and RSA respectively, by using the keyword private, this would prevent the names from being within the attacks knowledge. From line 6 the start of the main process is then declared, this is where (in line 7) the RSA name is outputted into the public channel where the attacker can then intercept the message (specifically the RSA name)- this process is then terminated on line 8 where the 0 denotes this termination. In order to find out whether the attacker has been able to intercept the names, in lines 9 and 10 we insert the query attacker along with the name that we would like to know if the attacker is able to intercept. The following figure displays the command line output of the results from our queries.
 
-1. Open the Terminal application on your MacBook Air. You can find it by going to Launchpad or using the Spotlight search (press Command + Space and type "Terminal").
+![hello.pv query analysis](images/hello_proverif.png)
 
-2. In the Terminal, paste the following command and press Enter:
+**Fig 2. Response from sample query (hello.pv)**
 
-```bash
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)"
+The query was to find whether the attacker is RSA or Cocks. ProVerif, using the Horn clause (taking logic disjunction where the code ensures that both RSA and Cocks are set to private), determines that the names Cocks but RSA is not unattainable by the attacker. The reason for this is due to the RSA name being present on the free channel.
+After testing out the sample data and going through the manual, we devised our own code for a symmetric key.
+
+### The Handshake Protocol
+Before we delve into the main focus of this thesis, the Diffie-Hellman protocol, it is imperative that we understand the two types of encryption which can be involved in these cryptographic primitives- we have symmetric and asymmetric encryption. Diffie-Hellman protocol presents asymmetric encryption, however, I will begin by explaining symmetric encryption, this can be demonstrated using the handshake protocol. During the handshake protocol, the two communicating parties will initially decide on the encryption algorithms being used then they will establish the session keys which will be used.
+![handshake protocol](images/handshakescreenshot.png)
+**Coding the handshake protocol with proverif language**
+
+In the first line the type key is defined, in the 3rd and 4th line it is then used to represent the encryption and decryption of the message- in these lines the bitstring type does not need to be declared as it is already built-in. It is also in these lines where the encryption and decryption functions are first declared and their functions start to take shape. Enc and dec are constructors that will read the bitstring, key and output bitstring.
+The destructor in line 5 is used to model the decryption operation, here pt respresents the message in plaintext/encrypted and k represents the symmetric key which was first introduced in line 1. Line 5 is signed off with dec(enc(pt,k),k)=pt which means that the receiver will get the message in plaintext if they are able to decrypt it.
+Line 8 declares the free name type c of channel which is used for public channel communication between the two parties which is open to the public and even the attacker. Line 10 notifies ProVerif that the bitstring message declared in line 7 is what it should analyse if the attacker is able to intercept this message is true or false – this free channel m created in line 7 is set to private and thus is not
+ 
+accessible to the attacker. Following this is query attacker (m) which will analyse the entire code to see if the channel and subsequently the message is accessible to attacker and this is what we will look out for in the command line output.
+Lines 12-13 code for the encryption of the message and also sends it through the channel to the receiver. Lines 15-18 code the receipt and decryption of the message sent from the sender.
+
+![proverif response of analysis](images/handshake_proverif.png)
+**Figure 4. This is the terminal output after running ProVerif on the handshake protocol coding**
+From this screenshot of the command line after running ProVerif on the code we can see that the query attacker(m[ ]) is true meaning that the attacker will be unable to intercept the message. This is after ProVerif has analysed this protocol to see whether the message has ever been on the public channel through any of its processes- it has not so therefore it cannot be intercepted by the attacker.
+
+## UNderstanding Diffie-Hellman (DH) Key exchange protocol.
+DH is not to misconstrued with an actual key exchange in the sense that public variables are concatenated with certain private variable to create a key which is known only to those given access. The protocol can be described in this scenario:
+![DH diagram](images/keyExchange.png)
+
+**Fig 5. Colour Demonstration of how Diffie-Hellman protocol works.**
+The DH protocol can be shown as Person A and Person B choosing two colours unknown to each other. Each mixes their colour in the public channel where a generator generates a shade. Red (private key for A) and yellow will give a certain shade of orange whereas blue (private key for B) and yellow will give a certain shade of green. The difference in concentration (private key) of colour that a mixed to create the existing shade is unknown to attacker as well as interlocutors and the mixture is irreversible and therefore makes decryption by attacker harder- Person A also does not known the private key of Person B and vice versa until of course the exchange occurs.
+‘ag’ and ‘bg’ are public keys for Persons A and B respectively and will be in the public domain due to them establishing a “handshake” in plaintext and thus will be known to the attacker.
+Person A will acquire ‘bg’ and attach their private key to it ((g^b)^a) and the same will be with ‘ag’ by Person B ((g^a)^b). The combination will be the personal key that each individual uses in encryption a message that will be transmitted one another. Notably, the attacker in no way is able to guess what the combinations are without knowing the private key of each person.
+The security of the DH protocol is enhanced by g (generator) which is usually a small prime number and n which is usually a very large prime number about 2000-4000 bytes.
+
+The concept of Diffie-Hellman protocol and its usage in data encryption is understandable and has consistently shown to be effective in cybersecurity. Formulating properties within a session which will yield desired outcomes can be done with this. Nonetheless, it is impossible has humans to guess what errors could exist within encryption that will result in the attacker having access to the secret message. In this case, ProVerif can be used-
+a private key t is generated on both the client and server ends. It employs asymmetric algorithm, hence using private and public key. Initially, these keys are not used for encryption and decryption of data. The keys that the two parties use for encryption and decryption are generated upon their first interaction and agreement.
+
+1. Public Key Generation – Person A wishes to communicate with Person B. To do this, they must agree on two numbers 'G' and 'N'.
+2. They also choose random integers as their private key which is unknown to each other. Person A selects 'a' and Person B selects 'b'
+```From these two values, they both create keys which they will exchange. 
+PA_key= (G^a)%N
+PB_key= (G^b)%N
+The results from these calculations can be mathematically represented as: 
+PA_key = PB_key
 ```
-
-3. This command will download and run the Homebrew installation script. You may be prompted to enter your administrator password. Type your password carefully (it won't be visible) and press Enter.
-
-4. The installation process may take a few minutes. It will display the progress and complete the installation.
-
-5. Once the installation is finished, you can test Homebrew by running the following command in the Terminal:
-
-```bash
-brew --version
-```
-
-If Homebrew is installed correctly, it will display the version number.
-
-That's it! You have successfully installed Homebrew on your MacBook Air. You can now use it to install various software packages and utilities through the Terminal.
-
-To download and install ProVerif on MacBook Air, follow these steps:
-
-1. Open a web browser and go to the ProVerif website: https://www.proverif.inria.fr/.
-2. On the website, navigate to the "Download" section.
-3. Click on the appropriate download link based on your operating system (in this case, macOS).
-4. Save the downloaded file to a location on your MacBook Air.
-
-Now, to install ProVerif:
-
-1. Locate the downloaded file (usually in the "Downloads" folder).
-2. Double-click the downloaded file to open it. This will typically extract the ProVerif installation files.
-3. Open the Terminal application. You can find it by pressing Command + Spacebar, typing "Terminal," and pressing Enter.
-4. In the Terminal, navigate to the directory where the ProVerif installation files are extracted. For example, if the files are in the "Downloads" folder, type:
-   ```
-   cd ~/Downloads
-   ```
-5. Use the following command to make the ProVerif executable:
-   ```
-   chmod +x proverif
-   ```
-6. Finally, run the installation by executing the following command:
-   ```
-   ./proverif
-   ```
-   This will start the ProVerif installation process.
-
-Follow the on-screen instructions to complete the installation. Once installed, you can run ProVerif by typing `proverif` in the Terminal.
-
-Note: Make sure your MacBook Air has the required software dependencies installed, such as OCaml and opam, before installing ProVerif. You may need to follow additional steps to install these dependencies. Refer to the ProVerif documentation for more details.
-##
-
-
+The result of the handshake protocol is to make sure both parties have the same key without having to
+transmit through the public channel. If you look at the code and calculation on python, you will see
+that both person A and Person B have the same number: This is from the visual code output.
+Algebraically, PA_key = PB_key. Thus, both parties share a secret key that allows communication
+through the open channel whilst their message is hidden from attacker.
