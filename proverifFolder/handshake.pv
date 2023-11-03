@@ -1,0 +1,25 @@
+type key.
+
+fun enc(bitstring,key):bitstring.
+fun dec(bitstring,key):bitstring
+reduc forall pt:bitstring, k:key; dec(enc(pt,k),k)=pt.
+
+free m :bitstring [private].
+free c : channel.
+
+query attacker(m).
+
+let pA (k:key) =
+  out(c,enc(m,k)).
+
+let pB (k:key) =
+  in(c, e:bitstring);
+     let d=dec(e,k) in
+     0.
+
+
+
+
+process
+ new k:key;
+ (pA (k)) | (pB (k))
